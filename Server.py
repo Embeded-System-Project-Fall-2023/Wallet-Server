@@ -99,14 +99,16 @@ class ClientHandler(Thread):
 
 
 def initial_file():
-    m = {}
+    m = {
+        "10" : 1000
+    }
     users_file = open('users.json', 'a+')
     json.dump(m, users_file)
     users_file.close()
 
 
 if __name__ == '__main__':
-    # initial_file()
+    initial_file()
     server_socket = socket(AF_INET, SOCK_STREAM)
     server_socket.bind(SERVER_ADDRESS)
     server_socket.listen()
