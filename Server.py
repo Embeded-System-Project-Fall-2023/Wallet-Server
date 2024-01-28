@@ -56,7 +56,7 @@ class ClientHandler(Thread):
             return 0
 
     def modify_user_wallet(self, user_id, amount):
-        users_file = open('users.json')
+        users_file = open('users.json', 'a')
         users = json.load(users_file)
         client_amount = self.get_user_by_user_id(user_id, users)
         modify_amount = self.extract_amount(amount)
@@ -67,7 +67,7 @@ class ClientHandler(Thread):
         return client_amount
 
     def get_user_amount(self, user_id):
-        users_file = open('users.json')
+        users_file = open('users.json', 'a')
         users = json.load(users_file)
         client_amount = self.get_user_by_user_id(user_id, users)
         return client_amount
