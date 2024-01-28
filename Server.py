@@ -1,3 +1,4 @@
+import pickle
 from socket import *
 import json
 from threading import Thread
@@ -82,11 +83,11 @@ class ClientHandler(Thread):
             return -1
 
     def send_response(self, response):
-        self.client_connection.sendall(json.dumps(response))
+        self.client_connection.sendall(pickle.dumps(response))
 
     def run(self):
         plane_data = self.client_connection.recv(4096)
-        request = json.loads(plane_data)
+        request = pickle.loads(plane_data)
         client_amount = self.handle_request(request)
         response = None
         if client_amount != -1:
