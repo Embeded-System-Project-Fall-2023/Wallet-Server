@@ -98,7 +98,14 @@ class ClientHandler(Thread):
         self.client_connection.close()
 
 
+def initial_file():
+    m = {}
+    users_file = open('users.json', 'a')
+    json.dump(m, users_file)
+
+
 if __name__ == '__main__':
+    initial_file()
     server_socket = socket(AF_INET, SOCK_STREAM)
     server_socket.bind(SERVER_ADDRESS)
     server_socket.listen()
