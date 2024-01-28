@@ -47,10 +47,17 @@ class ClientHandler(Thread):
         else:
             print(f'The sign of the amount is not valid.')
 
+    def get_user_by_user_id(self, user_id, users):
+        if users.keys().__contains__():
+            return int(users[user_id])
+        else:
+            users[user_id] = 0
+            return 0
+
     def modify_user_wallet(self, user_id, amount):
         users_file = open('users.json')
         users = json.load(users_file)
-        client_amount = int(users[user_id])
+        client_amount = self.get_user_by_user_id(user_id, users)
         modify_amount = self.extract_amount(amount)
         client_amount += modify_amount
         users[user_id] = client_amount
@@ -61,7 +68,7 @@ class ClientHandler(Thread):
     def get_user_amount(self, user_id):
         users_file = open('users.json')
         users = json.load(users_file)
-        client_amount = users[user_id]
+        client_amount = self.get_user_by_user_id(user_id, users)
         return client_amount
 
     def handle_request(self, request):
