@@ -49,7 +49,7 @@ class ClientHandler(Thread):
             print(f'The sign of the amount is not valid.')
 
     def get_user_by_user_id(self, user_id, users):
-        if users.keys().__contains__():
+        if users.keys().__contains__(user_id):
             return int(users[user_id])
         else:
             users[user_id] = 0
