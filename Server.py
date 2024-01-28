@@ -50,30 +50,42 @@ class ClientHandler(Thread):
 
     def get_user_by_user_id(self, user_id, users):
         if users.keys().__contains__(user_id):
-            return int(users[user_id])
+            return int(users.get(user_id))
         else:
-            users[user_id] = 0
-            return 0
+            return -1
 
     def modify_user_wallet(self, user_id, amount):
-        users_file = open('users.json',)
+        users_file = open('users.json', 'r+')
         users = json.load(users_file)
         client_amount = self.get_user_by_user_id(user_id, users)
+        if client_amount == -1:
+            users[user_id] = 0
+            client_amount = 0
         modify_amount = self.extract_amount(amount)
         client_amount += modify_amount
         users[user_id] = client_amount
-        json.dump(users, users_file, indent=2)
         users_file.close()
+        self.save_new_amounts(users)
         return client_amount
 
+    @staticmethod
+    def save_new_amounts(users):
+        users_file = open('users.json', 'w')
+        json.dump(users, users_file, indent=2)
+        users_file.close()
     def get_user_amount(self, user_id):
         users_file = open('users.json',)
         users = json.load(users_file)
         client_amount = self.get_user_by_user_id(user_id, users)
+        if client_amount == -1:
+            users[user_id] = 0
+            client_amount = 0
+        users_file.close()
+        self.save_new_amounts(users)
         return client_amount
 
     def handle_request(self, request):
-        user_id = request.user_id
+        user_id = str(request.user_id)
         request_type = request.request_type
         if request_type == RequestType.MODIFY:
             return self.modify_user_wallet(user_id, request.amount)
@@ -94,21 +106,12 @@ class ClientHandler(Thread):
             response = Response(ResponseType.OK, client_amount, 'Request accepted')
         else:
             response = Response(ResponseType.ERROR, None, 'An error occurred')
+
         self.send_response(response)
         self.client_connection.close()
 
 
-def initial_file():
-    m = {
-        "10" : 1000
-    }
-    users_file = open('users.json', 'a+')
-    json.dump(m, users_file)
-    users_file.close()
-
-
 if __name__ == '__main__':
-    # initial_file()
     server_socket = socket(AF_INET, SOCK_STREAM)
     server_socket.bind(SERVER_ADDRESS)
     server_socket.listen()
