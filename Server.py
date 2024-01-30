@@ -4,7 +4,7 @@ import json
 from threading import Thread
 from enum import Enum
 
-SERVER_IP = '37.152.183.210'
+SERVER_IP = '127.0.0.1'
 SERVER_PORT = 8090
 SERVER_ADDRESS = (SERVER_IP, SERVER_PORT)
 
@@ -19,17 +19,24 @@ class ResponseType(Enum):
     ERROR = 2
 
 
-class Request:
+class UserNotFound(Exception):
     def __init__(self):
-        self.user_id = None
-        self.request_type = None
-        self.amount = None
+        pass
+
+
+class Request:
+    def __init__(self, user_id, request_type, amount):
+        self.user_id = user_id
+        self.request_type = request_type
+        self.amount = amount
+
 
 
 class Response:
-    def __init__(self, response_type, client_amount, message):
+    def __init__(self, response_type, client_amount, message, client_password):
         self.response_type = response_type
         self.client_amount = client_amount
+        self.client_password = client_password
         self.message = message
 
 
@@ -48,67 +55,65 @@ class ClientHandler(Thread):
         else:
             print(f'The sign of the amount is not valid.')
 
-    def get_user_by_user_id(self, user_id, users):
+    def get_user_by_user_id(self, user_id):
+        users = self.read_users_file()
         if users.keys().__contains__(user_id):
-            return int(users.get(user_id))
+            return users.get(user_id), users
         else:
-            return -1
+            raise UserNotFound
 
-    def modify_user_wallet(self, user_id, amount):
+    def read_users_file(self):
         users_file = open('users.json', 'r+')
         users = json.load(users_file)
-        client_amount = self.get_user_by_user_id(user_id, users)
-        if client_amount == -1:
-            users[user_id] = 0
-            client_amount = 0
-        modify_amount = self.extract_amount(amount)
-        client_amount += modify_amount
-        users[user_id] = client_amount
         users_file.close()
+        return users
+
+    def modify_user_wallet(self, user_id, amount):
+        user_info, users = self.get_user_by_user_id(user_id)
+        modify_amount = self.extract_amount(amount)
+        user_info[0] = user_info[0] + modify_amount
         self.save_new_amounts(users)
-        return client_amount
+        return user_info
 
     @staticmethod
     def save_new_amounts(users):
         users_file = open('users.json', 'w')
         json.dump(users, users_file, indent=2)
         users_file.close()
+
     def get_user_amount(self, user_id):
-        users_file = open('users.json',)
-        users = json.load(users_file)
-        client_amount = self.get_user_by_user_id(user_id, users)
-        if client_amount == -1:
-            users[user_id] = 0
-            client_amount = 0
-        users_file.close()
-        self.save_new_amounts(users)
-        return client_amount
+        user_info, users = self.get_user_by_user_id(user_id)
+        return user_info
 
     def handle_request(self, request):
         user_id = str(request.user_id)
         request_type = request.request_type
-        if request_type == RequestType.MODIFY:
+        if request_type.value == RequestType.MODIFY.value:
             return self.modify_user_wallet(user_id, request.amount)
-        elif request_type == RequestType.GET:
+        elif request_type.value == RequestType.GET.value:
             return self.get_user_amount(user_id)
         else:
-            return -1
+            raise UserNotFound
 
     def send_response(self, response):
         self.client_connection.sendall(pickle.dumps(response))
 
-    def run(self):
+    def get_request(self):
         plane_data = self.client_connection.recv(4096)
         request = pickle.loads(plane_data)
-        client_amount = self.handle_request(request)
-        response = None
-        if client_amount != -1:
-            response = Response(ResponseType.OK, client_amount, 'Request accepted')
-        else:
-            response = Response(ResponseType.ERROR, None, 'An error occurred')
+        return request
 
-        self.send_response(response)
-        self.client_connection.close()
+    def run(self):
+        response = None
+        try:
+            request = self.get_request()
+            user_info = self.handle_request(request)
+            response = Response(ResponseType.OK, user_info[0], 'Request accepted', user_info[1])
+        except UserNotFound:
+            response = Response(ResponseType.ERROR, None, 'An error occurred', None)
+        finally:
+            self.send_response(response)
+            self.client_connection.close()
 
 
 if __name__ == '__main__':
