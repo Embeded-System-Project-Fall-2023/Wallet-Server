@@ -14,11 +14,12 @@ class ResponseType(Enum):
 
 
 class Response:
-    def __init__(self, response_type, client_amount, message, client_password):
+    def __init__(self, response_type, client_amount, message, client_password, last_transaction):
         self.response_type = response_type
         self.client_amount = client_amount
         self.client_password = client_password
         self.message = message
+        self.last_transaction = last_transaction
 
 
 class Request:
@@ -31,6 +32,8 @@ class Request:
 class RequestType(Enum):
     MODIFY = 1
     GET = 2
+    LAST_TRANSACTION = 3
+    CHANGE_PASSWORD = 4
 
 
 class Client:
@@ -47,10 +50,11 @@ class Client:
 
     def __extract_user_info(self, data):
         if data.response_type == ResponseType.ERROR:
-            return None, None
+            return None, None, None
         client_amount = data.client_amount
         client_password = data.client_password
-        return client_amount, client_password
+        client_last_transaction = data.last_transaction
+        return client_amount, client_password, client_last_transaction
 
     def get_user_info(self, user_id):
         get_request = Request(user_id, RequestType.GET, None)
@@ -61,5 +65,11 @@ class Client:
         modify_request = Request(user_id, RequestType.MODIFY, amount)
         data = self.__send_request(modify_request)
         return self.__extract_user_info(data)
+
+    def update_user_password(self, user_id, new_password):
+        update_password_request = Request(user_id, RequestType.CHANGE_PASSWORD, str(new_password))
+        data = self.__send_request(update_password_request)
+        return self.__extract_user_info(data)
+
 
 

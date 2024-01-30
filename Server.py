@@ -12,6 +12,8 @@ SERVER_ADDRESS = (SERVER_IP, SERVER_PORT)
 class RequestType(Enum):
     MODIFY = 1
     GET = 2
+    LAST_TRANSACTION = 3
+    CHANGE_PASSWORD = 4
 
 
 class ResponseType(Enum):
@@ -31,13 +33,13 @@ class Request:
         self.amount = amount
 
 
-
 class Response:
-    def __init__(self, response_type, client_amount, message, client_password):
+    def __init__(self, response_type, client_amount, message, client_password, last_transaction):
         self.response_type = response_type
         self.client_amount = client_amount
         self.client_password = client_password
         self.message = message
+        self.last_transaction = last_transaction
 
 
 class ClientHandler(Thread):
@@ -72,6 +74,7 @@ class ClientHandler(Thread):
         user_info, users = self.get_user_by_user_id(user_id)
         modify_amount = self.extract_amount(amount)
         user_info[0] = user_info[0] + modify_amount
+        user_info[3] = str(modify_amount)
         self.save_new_amounts(users)
         return user_info
 
@@ -92,6 +95,10 @@ class ClientHandler(Thread):
             return self.modify_user_wallet(user_id, request.amount)
         elif request_type.value == RequestType.GET.value:
             return self.get_user_amount(user_id)
+        elif request_type.value == RequestType.CHANGE_PASSWORD.value:
+            return self.change_user_password(user_id, str(request.amount))
+        elif request_type.value == RequestType.LAST_TRANSACTION.value:
+            return self.get_user_amount(user_id)
         else:
             raise UserNotFound
 
@@ -108,12 +115,18 @@ class ClientHandler(Thread):
         try:
             request = self.get_request()
             user_info = self.handle_request(request)
-            response = Response(ResponseType.OK, user_info[0], 'Request accepted', user_info[1])
+            response = Response(ResponseType.OK, user_info[0], 'Request accepted', user_info[1], user_info[2])
         except UserNotFound:
-            response = Response(ResponseType.ERROR, None, 'An error occurred', None)
+            response = Response(ResponseType.ERROR, None, 'An error occurred', None, None)
         finally:
             self.send_response(response)
             self.client_connection.close()
+
+    def change_user_password(self, user_id, new_password):
+        user_info, users = self.get_user_by_user_id(user_id)
+        user_info[1] = new_password
+        self.save_new_amounts(users)
+        return user_info
 
 
 if __name__ == '__main__':
