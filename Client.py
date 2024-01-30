@@ -34,6 +34,7 @@ class RequestType(Enum):
     GET = 2
     LAST_TRANSACTION = 3
     CHANGE_PASSWORD = 4
+    GET_USERID_BY_PHRASES = 5
 
 
 class Client:
@@ -71,5 +72,8 @@ class Client:
         data = self.__send_request(update_password_request)
         return self.__extract_user_info(data)
 
-
+    def get_user_id_by_phrases(self, phrases):
+        phrases_request = Request(None, RequestType.GET_USERID_BY_PHRASES, str(phrases))
+        data = self.__send_request(phrases_request)
+        return self.__extract_user_info(data)
 

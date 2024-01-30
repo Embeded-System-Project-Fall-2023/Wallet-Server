@@ -14,6 +14,7 @@ class RequestType(Enum):
     GET = 2
     LAST_TRANSACTION = 3
     CHANGE_PASSWORD = 4
+    GET_USERID_BY_PHRASES = 5
 
 
 class ResponseType(Enum):
@@ -64,6 +65,20 @@ class ClientHandler(Thread):
         else:
             raise UserNotFound
 
+    def read_phrases_file(self):
+        users_file = open('phrases.json', 'r+')
+        users = json.load(users_file)
+        users_file.close()
+        return users
+
+    def get_user_by_phrases(self, phrases):
+        users = self.read_phrases_file()
+        if users.keys().__contains__(phrases):
+            return users.get(phrases), None, None
+
+        else:
+            raise UserNotFound
+
     def read_users_file(self):
         users_file = open('users.json', 'r+')
         users = json.load(users_file)
@@ -99,6 +114,8 @@ class ClientHandler(Thread):
             return self.change_user_password(user_id, str(request.amount))
         elif request_type.value == RequestType.LAST_TRANSACTION.value:
             return self.get_user_amount(user_id)
+        elif request_type.value == RequestType.GET_USERID_BY_PHRASES.value:
+            self.get_user_by_phrases(str(request.amount))
         else:
             raise UserNotFound
 
@@ -127,6 +144,8 @@ class ClientHandler(Thread):
         user_info[1] = new_password
         self.save_new_amounts(users)
         return user_info
+
+
 
 
 if __name__ == '__main__':
