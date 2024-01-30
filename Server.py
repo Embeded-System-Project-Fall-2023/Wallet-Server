@@ -4,7 +4,7 @@ import json
 from threading import Thread
 from enum import Enum
 
-SERVER_IP = '127.0.0.1'
+SERVER_IP = '37.152.183.210'
 SERVER_PORT = 8090
 SERVER_ADDRESS = (SERVER_IP, SERVER_PORT)
 
