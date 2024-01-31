@@ -4,7 +4,8 @@ import json
 from threading import Thread
 from enum import Enum
 
-SERVER_IP = '37.152.183.210'
+SERVER_IP = '127.0.0.1'
+#37.152.183.210
 SERVER_PORT = 8090
 SERVER_ADDRESS = (SERVER_IP, SERVER_PORT)
 
@@ -74,7 +75,7 @@ class ClientHandler(Thread):
     def get_user_by_phrases(self, phrases):
         users = self.read_phrases_file()
         if users.keys().__contains__(phrases):
-            return users.get(phrases), None, None
+            return users.get(phrases), 's', 'l'
 
         else:
             raise UserNotFound
@@ -89,7 +90,7 @@ class ClientHandler(Thread):
         user_info, users = self.get_user_by_user_id(user_id)
         modify_amount = self.extract_amount(amount)
         user_info[0] = user_info[0] + modify_amount
-        user_info[3] = str(modify_amount)
+        user_info[2] = str(modify_amount)
         self.save_new_amounts(users)
         return user_info
 
@@ -115,7 +116,7 @@ class ClientHandler(Thread):
         elif request_type.value == RequestType.LAST_TRANSACTION.value:
             return self.get_user_amount(user_id)
         elif request_type.value == RequestType.GET_USERID_BY_PHRASES.value:
-            self.get_user_by_phrases(str(request.amount))
+            return self.get_user_by_phrases(str(request.amount))
         else:
             raise UserNotFound
 
